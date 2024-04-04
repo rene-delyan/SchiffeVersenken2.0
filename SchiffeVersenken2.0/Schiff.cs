@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-/*namespace SchiffeVersenken
+namespace SchiffeVersenken
 {
     internal class Schiff
     {
@@ -46,4 +46,3 @@ using System.Threading.Tasks;
         }
     }
 }
-*/

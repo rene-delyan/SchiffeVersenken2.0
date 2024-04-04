@@ -4,29 +4,30 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-/*namespace SchiffeVersenken
+namespace SchiffeVersenken
 {
-    internal class Spiel
+    abstract class Spiel
     {
-        private const int SpielfeldGroesse = 12;
-        private const int AnzahlSchiffe = 10;
+        protected const int SpielfeldGroesse = 10;
+        protected const int AnzahlSchiffe = 5;
 
-        private ZellenStatus[,] spielfeld;
-        private List<Schiff> schiffe;
-        private Random zufallsgenerator;
+        protected ZellenStatus[,] spielfeldSpieler;
+        protected ZellenStatus[,] spielfeldGegner;
+        protected List<Schiff> schiffeSpieler;
+        protected List<Schiff> schiffeGegner;
+        protected Random zufallsgenerator;
 
-        public void Start ()
+        public Spiel ()
         {
-            spielfeld = new ZellenStatus[SpielfeldGroesse, SpielfeldGroesse];
-            schiffe = new List<Schiff>();
+            spielfeldSpieler = new ZellenStatus[SpielfeldGroesse, SpielfeldGroesse];
+            spielfeldGegner = new ZellenStatus[SpielfeldGroesse, SpielfeldGroesse];
+            schiffeSpieler = new List<Schiff>();
+            schiffeGegner = new List<Schiff>();
             zufallsgenerator = new Random();
-
-            InitialisiereSpielfeld();
-            PlatziereSchiffe();
-            Spielablauf();
         }
+        public abstract void Start ();
 
-        private void InitialisiereSpielfeld ()
+        protected void InitialisiereSpielfeld (ZellenStatus[,] spielfeld)
         {
             for (int i = 0; i < SpielfeldGroesse; i++)
             {
@@ -37,18 +38,15 @@ using System.Threading.Tasks;
             }
         }
 
-        private void PlatziereSchiffe ()
+        protected void PlatziereSchiffe (List<Schiff> schiffe, ZellenStatus[,] spielfeld)
         {
-            for (int i = 4; i >= 1; i--)
+            for (int i = 0; i < AnzahlSchiffe; i++)
             {
-                for (int j = 0; j < 5 - i; j++)
-                {
-                    PlatzierenNeuesSchiff(i);
-                }
+                PlatzierenNeuesSchiff(i + 1, schiffe, spielfeld);
             }
         }
 
-        private void PlatzierenNeuesSchiff (int laenge)
+        protected void PlatzierenNeuesSchiff (int laenge, List<Schiff> schiffe, ZellenStatus[,] spielfeld)
         {
             Schiff neuesSchiff = new Schiff(laenge);
 
@@ -59,113 +57,53 @@ using System.Threading.Tasks;
                 int y = zufallsgenerator.Next(0, SpielfeldGroesse);
                 bool horizontal = zufallsgenerator.Next(2) == 0;
 
-                if (IstPlatzVerfuegbar(x, y, laenge, horizontal))
+                if (IstPlatzVerfuegbar(x, y, laenge, horizontal, schiffe))
                 {
                     neuesSchiff.Platzieren(x, y, horizontal);
                     schiffe.Add(neuesSchiff);
-                    platziert = true;
 
-                    // Markieren Sie das Spielfeld als Schiff
+                    // Setze Zellenstatus auf "Schiff" für jedes Feld des platzierten Schiffs
                     foreach (var position in neuesSchiff.Positionen)
                     {
                         spielfeld[position[0], position[1]] = ZellenStatus.Schiff;
                     }
+
+                    platziert = true;
                 }
             }
         }
 
-        private bool IstPlatzVerfuegbar (int startX, int startY, int laenge, bool horizontal)
+        protected bool IstPlatzVerfuegbar (int startX, int startY, int laenge, bool horizontal, List<Schiff> schiffe)
         {
-            if (horizontal)
+            // Überprüfe, ob das Schiff außerhalb des Spielfelds platziert wird
+            if (horizontal && startX + laenge > SpielfeldGroesse)
+                return false;
+            if (!horizontal && startY + laenge > SpielfeldGroesse)
+                return false;
+
+            // Überprüfe, ob das Schiff überlappende Felder hat oder sich zu nahe an anderen Schiffen befindet
+            for (int i = -1; i <= laenge; i++)
             {
-                for (int i = 0; i < laenge; i++)
+                for (int j = -1; j <= 1; j++)
                 {
-                    if (startX + i >= SpielfeldGroesse || spielfeld[startX + i, startY] != ZellenStatus.Leer)
+                    int x = startX + (horizontal ? i : j);
+                    int y = startY + (horizontal ? j : i);
+
+                    if (x >= 0 && x < SpielfeldGroesse && y >= 0 && y < SpielfeldGroesse)
                     {
-                        return false;
-                    }
-                }
-            }
-            else
-            {
-                for (int i = 0; i < laenge; i++)
-                {
-                    if (startY + i >= SpielfeldGroesse || spielfeld[startX, startY + i] != ZellenStatus.Leer)
-                    {
-                        return false;
+                        if (spielfeldSpieler[x, y] != ZellenStatus.Leer)
+                            return false;
                     }
                 }
             }
             return true;
         }
 
-        private void Spielablauf ()
+        protected abstract void Spielablauf ();
+
+        protected void ZeigeEigenesSpielfeld ()
         {
-            while (true)
-            {
-                // Spieler schießt
-                Console.WriteLine("Spielfeld:");
-                ZeigeSpielfeld();
-                Console.WriteLine("Geben Sie die Koordinaten für Ihren Schuss ein (z.B. A3):");
-                string eingabe = Console.ReadLine().ToUpper();
-                int x = eingabe[0] - 'A';
-                int y = int.Parse(eingabe.Substring(1)) - 1;
-
-                if (x < 0 || x >= SpielfeldGroesse || y < 0 || y >= SpielfeldGroesse)
-                {
-                    Console.WriteLine("Ungültige Koordinaten! Bitte erneut eingeben.");
-                    continue;
-                }
-
-                ZellenStatus status = spielfeld[x, y];
-                if (status == ZellenStatus.Treffer || status == ZellenStatus.Versenkt)
-                {
-                    Console.WriteLine("Bereits geschossen! Bitte erneut eingeben.");
-                    continue;
-                }
-
-                if (status == ZellenStatus.Schiff)
-                {
-                    Console.WriteLine("Treffer!");
-                    spielfeld[x, y] = ZellenStatus.Treffer;
-                    Schiff getroffenesSchiff = FindeGetroffenesSchiff(x, y);
-                    if (getroffenesSchiff.IstVersenkt(spielfeld))
-                    {
-                        Console.WriteLine("Schiff versenkt!");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Kein Treffer.");
-                    spielfeld[x, y] = ZellenStatus.Leer;
-                }
-
-                // Überprüfen, ob alle Schiffe versenkt wurden
-                if (schiffe.TrueForAll(schiff => schiff.IstVersenkt(spielfeld)))
-                {
-                    Console.WriteLine("Herzlichen Glückwunsch! Alle Schiffe versenkt!");
-                    break;
-                }
-            }
-        }
-
-        private Schiff FindeGetroffenesSchiff (int x, int y)
-        {
-            foreach (var schiff in schiffe)
-            {
-                foreach (var position in schiff.Positionen)
-                {
-                    if (position[0] == x && position[1] == y)
-                    {
-                        return schiff;
-                    }
-                }
-            }
-            return null;
-        }
-
-        private void ZeigeSpielfeld ()
-        {
+            Console.WriteLine("Dein Spielfeld:");
             Console.Write("  ");
             for (int i = 1; i <= SpielfeldGroesse; i++)
             {
@@ -178,7 +116,7 @@ using System.Threading.Tasks;
                 Console.Write($"{(char)('A' + i)} ");
                 for (int j = 0; j < SpielfeldGroesse; j++)
                 {
-                    switch (spielfeld[i, j])
+                    switch (spielfeldSpieler[i, j])
                     {
                         case ZellenStatus.Leer:
                             Console.Write(". ");
@@ -192,6 +130,53 @@ using System.Threading.Tasks;
                         case ZellenStatus.Versenkt:
                             Console.Write("# ");
                             break;
+                        case ZellenStatus.Verfehlt:
+                            Console.Write("* ");
+                            break;
+                        default:
+                            Console.Write(". ");
+                            break;
+                    }
+                }
+                Console.WriteLine();
+            }
+        }
+
+        protected void ZeigeGegnerSpielfeld (ZellenStatus[,] spielfeldGegner, bool isPlayer)
+        {
+            if (isPlayer)
+                Console.WriteLine("Gegnerisches Spielfeld:");
+            else
+                Console.WriteLine("Eigenes Spielfeld:");
+            Console.Write("  ");
+            for (int i = 1; i <= SpielfeldGroesse; i++)
+            {
+                Console.Write($"{i} ");
+            }
+            Console.WriteLine();
+
+            for (int i = 0; i < SpielfeldGroesse; i++)
+            {
+                Console.Write($"{(char)('A' + i)} ");
+                for (int j = 0; j < SpielfeldGroesse; j++)
+                {
+                    switch (spielfeldGegner[i, j])
+                    {
+                        case ZellenStatus.Leer:
+                            Console.Write(". ");
+                            break;
+                        case ZellenStatus.Treffer:
+                            Console.Write("X ");
+                            break;
+                        case ZellenStatus.Versenkt:
+                            Console.Write("# ");
+                            break;
+                        case ZellenStatus.Verfehlt:
+                            Console.Write("* ");
+                            break;
+                        default:
+                            Console.Write(". ");
+                            break;
                     }
                 }
                 Console.WriteLine();
@@ -199,4 +184,4 @@ using System.Threading.Tasks;
         }
     }
 }
-    */
+    
