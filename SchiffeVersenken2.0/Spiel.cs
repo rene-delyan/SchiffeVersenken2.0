@@ -4,12 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SchiffeVersenken
-{
-    abstract class Spiel
-    {
-        protected const int SpielfeldGroesse = 10;
-        protected const int AnzahlSchiffe = 5;
+namespace SchiffeVersenken {
+    abstract class Spiel {
+        protected const int SpielfeldGroesse = 12;
+        protected const int AnzahlSchiffe = 10;
 
         protected ZellenStatus[,] spielfeldSpieler;
         protected ZellenStatus[,] spielfeldGegner;
@@ -21,18 +19,16 @@ namespace SchiffeVersenken
         {
             spielfeldSpieler = new ZellenStatus[SpielfeldGroesse, SpielfeldGroesse];
             spielfeldGegner = new ZellenStatus[SpielfeldGroesse, SpielfeldGroesse];
-            schiffeSpieler = new List<Schiff>();
-            schiffeGegner = new List<Schiff>();
-            zufallsgenerator = new Random();
+            schiffeSpieler = new List<Schiff> ();
+            schiffeGegner = new List<Schiff> ();
+            zufallsgenerator = new Random ();
         }
         public abstract void Start ();
 
         protected void InitialisiereSpielfeld (ZellenStatus[,] spielfeld)
         {
-            for (int i = 0; i < SpielfeldGroesse; i++)
-            {
-                for (int j = 0; j < SpielfeldGroesse; j++)
-                {
+            for (int i = 0; i < SpielfeldGroesse; i++) {
+                for (int j = 0; j < SpielfeldGroesse; j++) {
                     spielfeld[i, j] = ZellenStatus.Leer;
                 }
             }
@@ -40,9 +36,10 @@ namespace SchiffeVersenken
 
         protected void PlatziereSchiffe (List<Schiff> schiffe, ZellenStatus[,] spielfeld)
         {
-            for (int i = 0; i < AnzahlSchiffe; i++)
-            {
-                PlatzierenNeuesSchiff(i + 1, schiffe, spielfeld);
+            int[] schiffsGroessen = { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
+
+            for (int i = 0; i < schiffsGroessen.Length; i++) {
+                PlatzierenNeuesSchiff (schiffsGroessen[i], schiffe, spielfeld);
             }
         }
 
@@ -51,20 +48,17 @@ namespace SchiffeVersenken
             Schiff neuesSchiff = new Schiff(laenge);
 
             bool platziert = false;
-            while (!platziert)
-            {
+            while (!platziert) {
                 int x = zufallsgenerator.Next(0, SpielfeldGroesse);
                 int y = zufallsgenerator.Next(0, SpielfeldGroesse);
                 bool horizontal = zufallsgenerator.Next(2) == 0;
 
-                if (IstPlatzVerfuegbar(x, y, laenge, horizontal, schiffe))
-                {
-                    neuesSchiff.Platzieren(x, y, horizontal);
-                    schiffe.Add(neuesSchiff);
+                if (IstPlatzVerfuegbar (x, y, laenge, horizontal, schiffe, spielfeld)) {
+                    neuesSchiff.Platzieren (x, y, horizontal);
+                    schiffe.Add (neuesSchiff);
 
                     // Setze Zellenstatus auf "Schiff" für jedes Feld des platzierten Schiffs
-                    foreach (var position in neuesSchiff.Positionen)
-                    {
+                    foreach (var position in neuesSchiff.Positionen) {
                         spielfeld[position[0], position[1]] = ZellenStatus.Schiff;
                     }
 
@@ -73,7 +67,7 @@ namespace SchiffeVersenken
             }
         }
 
-        protected bool IstPlatzVerfuegbar (int startX, int startY, int laenge, bool horizontal, List<Schiff> schiffe)
+        protected bool IstPlatzVerfuegbar (int startX, int startY, int laenge, bool horizontal, List<Schiff> schiffe, ZellenStatus[,] spielfeld)
         {
             // Überprüfe, ob das Schiff außerhalb des Spielfelds platziert wird
             if (horizontal && startX + laenge > SpielfeldGroesse)
@@ -82,16 +76,13 @@ namespace SchiffeVersenken
                 return false;
 
             // Überprüfe, ob das Schiff überlappende Felder hat oder sich zu nahe an anderen Schiffen befindet
-            for (int i = -1; i <= laenge; i++)
-            {
-                for (int j = -1; j <= 1; j++)
-                {
+            for (int i = -1; i <= laenge; i++) {
+                for (int j = -1; j <= 1; j++) {
                     int x = startX + (horizontal ? i : j);
                     int y = startY + (horizontal ? j : i);
 
-                    if (x >= 0 && x < SpielfeldGroesse && y >= 0 && y < SpielfeldGroesse)
-                    {
-                        if (spielfeldSpieler[x, y] != ZellenStatus.Leer)
+                    if (x >= 0 && x < SpielfeldGroesse && y >= 0 && y < SpielfeldGroesse) {
+                        if (spielfeld[x, y] != ZellenStatus.Leer)
                             return false;
                     }
                 }
@@ -103,85 +94,89 @@ namespace SchiffeVersenken
 
         protected void ZeigeEigenesSpielfeld ()
         {
-            Console.WriteLine("Dein Spielfeld:");
-            Console.Write("  ");
-            for (int i = 1; i <= SpielfeldGroesse; i++)
-            {
-                Console.Write($"{i} ");
+            Console.WriteLine ("Dein Spielfeld:");
+            Console.Write ("  ");
+            for (int i = 1; i <= SpielfeldGroesse; i++) {
+                Console.Write ($"{i} ");
             }
-            Console.WriteLine();
+            Console.WriteLine ();
 
-            for (int i = 0; i < SpielfeldGroesse; i++)
-            {
-                Console.Write($"{(char)('A' + i)} ");
-                for (int j = 0; j < SpielfeldGroesse; j++)
-                {
-                    switch (spielfeldSpieler[i, j])
-                    {
+            for (int i = 0; i < SpielfeldGroesse; i++) {
+                Console.Write ($"{(char) ('A' + i)} ");
+                for (int j = 0; j < SpielfeldGroesse; j++) {
+                    switch (spielfeldSpieler[i, j]) {
                         case ZellenStatus.Leer:
-                            Console.Write(". ");
+                            Console.Write (".  ");
                             break;
                         case ZellenStatus.Schiff:
-                            Console.Write("O ");
+                            Console.Write ("O  ");
                             break;
                         case ZellenStatus.Treffer:
-                            Console.Write("X ");
+                            Console.Write ("X  ");
                             break;
                         case ZellenStatus.Versenkt:
-                            Console.Write("# ");
+                            Console.Write ("#  ");
                             break;
                         case ZellenStatus.Verfehlt:
-                            Console.Write("* ");
+                            Console.Write ("*  ");
                             break;
                         default:
-                            Console.Write(". ");
+                            Console.Write (".  ");
                             break;
                     }
                 }
-                Console.WriteLine();
+                Console.WriteLine ();
+            }
+        }
+
+        public void MarkiereVersenkt (Schiff versenktesSchiff, ZellenStatus[,] spielfeld)
+        {
+            foreach (var position in versenktesSchiff.Positionen) {
+                spielfeld[position[0], position[1]] = ZellenStatus.Versenkt;
             }
         }
 
         protected void ZeigeGegnerSpielfeld (ZellenStatus[,] spielfeldGegner, bool isPlayer)
         {
             if (isPlayer)
-                Console.WriteLine("Gegnerisches Spielfeld:");
+                Console.WriteLine ("Gegnerisches Spielfeld:");
             else
-                Console.WriteLine("Eigenes Spielfeld:");
-            Console.Write("  ");
-            for (int i = 1; i <= SpielfeldGroesse; i++)
-            {
-                Console.Write($"{i} ");
+                Console.WriteLine ("Eigenes Spielfeld:");
+            Console.Write ("  ");
+            for (int i = 1; i <= SpielfeldGroesse; i++) {
+                if (i < 10)
+                    Console.Write ($"0{i} ");
+                else
+                    Console.Write ($"{i} ");
             }
-            Console.WriteLine();
+            Console.WriteLine ();
 
-            for (int i = 0; i < SpielfeldGroesse; i++)
-            {
-                Console.Write($"{(char)('A' + i)} ");
-                for (int j = 0; j < SpielfeldGroesse; j++)
-                {
-                    switch (spielfeldGegner[i, j])
-                    {
+            for (int i = 0; i < SpielfeldGroesse; i++) {
+                Console.Write ($"{(char) ('A' + i)} ");
+                for (int j = 0; j < SpielfeldGroesse; j++) {
+                    switch (spielfeldGegner[i, j]) {
                         case ZellenStatus.Leer:
-                            Console.Write(". ");
+                            Console.Write (".  ");
                             break;
                         case ZellenStatus.Treffer:
-                            Console.Write("X ");
+                            Console.Write ("X  ");
                             break;
                         case ZellenStatus.Versenkt:
-                            Console.Write("# ");
+                            Console.Write ("#  ");
                             break;
                         case ZellenStatus.Verfehlt:
-                            Console.Write("* ");
+                            Console.Write ("*  ");
+                            break;
+                        case ZellenStatus.Schiff:
+                            Console.Write ("O  ");
                             break;
                         default:
-                            Console.Write(". ");
+                            Console.Write (".  ");
                             break;
                     }
                 }
-                Console.WriteLine();
+                Console.WriteLine ();
             }
         }
     }
 }
-    
