@@ -29,7 +29,7 @@ namespace SchiffeVersenken {
         {
             for (int i = 0; i < SpielfeldGroesse; i++) {
                 for (int j = 0; j < SpielfeldGroesse; j++) {
-                    spielfeld[i, j] = ZellenStatus.Leer;
+                    spielfeld[i, j] = ZellenStatus.Unbekannt;
                 }
             }
         }
@@ -82,7 +82,7 @@ namespace SchiffeVersenken {
                     int y = startY + (horizontal ? j : i);
 
                     if (x >= 0 && x < SpielfeldGroesse && y >= 0 && y < SpielfeldGroesse) {
-                        if (spielfeld[x, y] != ZellenStatus.Leer)
+                        if (spielfeld[x, y] != ZellenStatus.Unbekannt)
                             return false;
                     }
                 }
