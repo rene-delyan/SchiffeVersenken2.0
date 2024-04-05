@@ -37,6 +37,7 @@ namespace SchiffeVersenken {
         protected void PlatziereSchiffe (List<Schiff> schiffe, ZellenStatus[,] spielfeld)
         {
             int[] schiffsGroessen = { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
+            //int[] schiffsGroessen = { 4, 4, 4, 4, 4, 4, 4, 4};
 
             for (int i = 0; i < schiffsGroessen.Length; i++) {
                 PlatzierenNeuesSchiff (schiffsGroessen[i], schiffe, spielfeld);

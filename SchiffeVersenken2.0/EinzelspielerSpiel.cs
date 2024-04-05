@@ -23,6 +23,8 @@ namespace SchiffeVersenken {
             int letzterTrefferX = -1;
             int letzterTrefferY = -1;
 
+            List<(int, int)> getroffeneSchuesse  = new List<(int, int)>();
+
             while (true) {
                 int x = 0;
                 int y = 0;
@@ -81,9 +83,10 @@ namespace SchiffeVersenken {
 
                     ZeigeGegnerSpielfeld (spielfeldSpieler, isPlayerOne);
                     // Computer schießt
-                    if (letzterTrefferX != -1 && letzterTrefferY != -1) {
+                    if (letzterTrefferX != -1 && letzterTrefferY != -1 || getroffeneSchuesse.Count > 1) {
                         // Schieße in der Nähe des letzten Treffers
-                        (x, y) = IntelligenterSchuss (letzterTrefferX, letzterTrefferY, spielfeldSpieler);
+                        (x, y) = IntelligenterSchuss (letzterTrefferX, letzterTrefferY, spielfeldSpieler, getroffeneSchuesse);
+
                     } else {
                         // Zufälliger Schuss
                         (x, y) = ZufaelligerSchuss (spielfeldSpieler);
@@ -91,11 +94,15 @@ namespace SchiffeVersenken {
                     Console.WriteLine ($"Der Computer schießt auf {Convert.ToChar ('A' + x)}{y + 1}...");
                     if (spielfeldSpieler[x, y] == ZellenStatus.Schiff) {
                         Console.WriteLine ("Treffer!");
+                        getroffeneSchuesse.Add ((x,y));
                         spielfeldSpieler[x, y] = ZellenStatus.Treffer;
                         Schiff getroffenesSchiff = FindeGetroffenesSchiff(x, y, schiffeSpieler);
                         if (getroffenesSchiff.IstVersenkt (spielfeldSpieler)) {
                             Console.WriteLine ("Schiff versenkt!");
+                            getroffeneSchuesse.Clear ();
                             MarkiereVersenkt (getroffenesSchiff, spielfeldSpieler);
+                            letzterTrefferX = -1;
+                            letzterTrefferY = -1;
                         } else {
                             letzterTrefferX = x;
                             letzterTrefferY = y;
@@ -105,8 +112,8 @@ namespace SchiffeVersenken {
                         Console.WriteLine ("Kein Treffer.");
                         spielfeldSpieler[x, y] = ZellenStatus.Verfehlt;
                         spieler1AmZug = true;
-                        letzterTrefferX = -1;
-                        letzterTrefferY = -1;
+                        //letzterTrefferX = -1;
+                        //letzterTrefferY = -1;
                     }
 
                     // Überprüfen, ob alle eigenen Schiffe versenkt wurden
@@ -143,22 +150,62 @@ namespace SchiffeVersenken {
             return null;
         }
 
-        private (int, int) IntelligenterSchuss (int x, int y, ZellenStatus[,] spielfeld)
+        private (int, int) IntelligenterSchuss (int x, int y, ZellenStatus[,] spielfeld, List<(int, int)> getroffeneSchuesse)
         {
             // Schieße in der Nähe des letzten Treffers
-            List<(int, int)> moeglicheSchuesse = new List<(int, int)>();
+            List<(int, int)> moeglicheSchuesse  = new List<(int, int)>();
 
-            // Schieße horizontal
-            if (x - 1 >= 0 && spielfeld[x - 1, y] == ZellenStatus.Unbekannt || x - 1 >= 0 && spielfeld[x - 1, y] == ZellenStatus.Schiff)
-                moeglicheSchuesse.Add ((x - 1, y));
-            if (x + 1 < SpielfeldGroesse && spielfeld[x + 1, y] == ZellenStatus.Unbekannt || x + 1 < SpielfeldGroesse && spielfeld[x + 1, y] == ZellenStatus.Schiff)
-                moeglicheSchuesse.Add ((x + 1, y));
+            if (getroffeneSchuesse.Count == 1)
+            {
+                // Schieße horizontal
+                if (x - 1 >= 0 && spielfeld[x - 1, y] == ZellenStatus.Unbekannt || x - 1 >= 0 && spielfeld[x - 1, y] == ZellenStatus.Schiff)
+                    moeglicheSchuesse.Add ((x - 1, y));
+                if (x + 1 < SpielfeldGroesse && spielfeld[x + 1, y] == ZellenStatus.Unbekannt || x + 1 < SpielfeldGroesse && spielfeld[x + 1, y] == ZellenStatus.Schiff)
+                    moeglicheSchuesse.Add ((x + 1, y));
 
-            // Schieße vertikal
-            if (y - 1 >= 0 && spielfeld[x, y - 1] == ZellenStatus.Unbekannt || y - 1 >= 0 && spielfeld[x, y - 1] == ZellenStatus.Schiff)
-                moeglicheSchuesse.Add ((x, y - 1));
-            if (y + 1 < SpielfeldGroesse && spielfeld[x, y + 1] == ZellenStatus.Unbekannt || y + 1 < SpielfeldGroesse && spielfeld[x, y + 1] == ZellenStatus.Schiff)
-                moeglicheSchuesse.Add ((x, y + 1));
+                // Schieße vertikal
+                if (y - 1 >= 0 && spielfeld[x, y - 1] == ZellenStatus.Unbekannt || y - 1 >= 0 && spielfeld[x, y - 1] == ZellenStatus.Schiff)
+                    moeglicheSchuesse.Add ((x, y - 1));
+                if (y + 1 < SpielfeldGroesse && spielfeld[x, y + 1] == ZellenStatus.Unbekannt || y + 1 < SpielfeldGroesse && spielfeld[x, y + 1] == ZellenStatus.Schiff)
+                    moeglicheSchuesse.Add ((x, y + 1));
+            }
+            else if (getroffeneSchuesse.Count >= 2) {
+                bool horizontal = false;
+                bool vertikal = false;
+    
+                // Überprüfe, ob die getroffenen Schüsse horizontal oder vertikal angeordnet sind
+                if (getroffeneSchuesse[0].Item1 == getroffeneSchuesse[1].Item1)
+                {
+                    horizontal = true;
+                }
+                else if (getroffeneSchuesse[0].Item2 == getroffeneSchuesse[1].Item2)
+                {
+                    vertikal = true;
+                }
+    
+                if (horizontal)
+                {
+                    // Sortiere die getroffenen Schüsse nach ihrer y-Koordinate
+                    getroffeneSchuesse.Sort((a, b) => a.Item2.CompareTo(b.Item2));
+        
+                    // Bestimme die Richtung und erweitere die möglichen Schüsse entsprechend
+                    if (y - 1 >= 0 && spielfeld[x, y - 1] == ZellenStatus.Unbekannt || y - 1 >= 0 && spielfeld[x, y - 1] == ZellenStatus.Schiff)
+                        moeglicheSchuesse.Add((x, y - 1));
+                    if (y + 1 < SpielfeldGroesse && spielfeld[x, y + 1] == ZellenStatus.Unbekannt || y + 1 < SpielfeldGroesse && spielfeld[x, y + 1] == ZellenStatus.Schiff)
+                        moeglicheSchuesse.Add((x, y + 1));
+                }
+                else if (vertikal)
+                {
+                    // Sortiere die getroffenen Schüsse nach ihrer x-Koordinate
+                    getroffeneSchuesse.Sort((a, b) => a.Item1.CompareTo(b.Item1));
+        
+                    // Bestimme die Richtung und erweitere die möglichen Schüsse entsprechend
+                    if (x - 1 >= 0 && spielfeld[x - 1, y] == ZellenStatus.Unbekannt || x - 1 >= 0 && spielfeld[x - 1, y] == ZellenStatus.Schiff)
+                        moeglicheSchuesse.Add((x - 1, y));
+                    if (x + 1 < SpielfeldGroesse && spielfeld[x + 1, y] == ZellenStatus.Unbekannt || x + 1 < SpielfeldGroesse && spielfeld[x + 1, y] == ZellenStatus.Schiff)
+                        moeglicheSchuesse.Add((x + 1, y));
+                }
+            }
 
             // Entferne Felder, die direkt neben einem bereits versenkten Schiff liegen
             moeglicheSchuesse.RemoveAll ((coord) =>
