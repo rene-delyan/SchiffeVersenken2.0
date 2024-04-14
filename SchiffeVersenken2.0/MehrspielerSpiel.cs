@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Media;
+using SchiffeVersenken2._0;
 
 namespace SchiffeVersenken {
     class MehrspielerSpiel : Spiel {
@@ -20,6 +22,7 @@ namespace SchiffeVersenken {
         protected override void Spielablauf ()
         {
             bool spieler1AmZug = true;
+            Sounds sounds = new Sounds ();
 
             while (true) {
                 bool isPlayerOne = true;
@@ -46,6 +49,7 @@ namespace SchiffeVersenken {
 
                     if (spielfeldGegner[x, y] == ZellenStatus.Schiff) {
                         Console.WriteLine ("Treffer!");
+                        sounds.PlayKaboom ();
                         spielfeldGegner[x, y] = ZellenStatus.Treffer;
                         Schiff getroffenesSchiff = FindeGetroffenesSchiff(x, y, schiffeGegner);
                         if (getroffenesSchiff.IstVersenkt (spielfeldGegner)) {
@@ -55,10 +59,12 @@ namespace SchiffeVersenken {
                         continue;
                     } else {
                         Console.WriteLine ("Kein Treffer.");
+                        sounds.PlaySploosh ();
                         spielfeldGegner[x, y] = ZellenStatus.Verfehlt;
                     }
                     spieler1AmZug = false;
                 } else if (!spieler1AmZug) {
+                    Console.ForegroundColor = ConsoleColor.Red;
                     // Überprüfen, ob alle Schiffe des Spielers 2 versenkt wurden
                     if (schiffeGegner.TrueForAll (schiff => SchiffIstVersenkt (schiff, spielfeldGegner))) {
                         Console.WriteLine ("Herzlichen Glückwunsch! Spieler 1 hat alle Schiffe von Spieler 2 versenkt! Spieler 1 gewinnt!");
@@ -106,7 +112,8 @@ namespace SchiffeVersenken {
                     }
                     Console.WriteLine ("Es wird auf eine Aktion gewartet.");
                     Console.ReadKey ();
-                    Console.Clear ();
+                    ClearConsole ();
+                    Console.ForegroundColor = ConsoleColor.White;
                 }
             }
         }

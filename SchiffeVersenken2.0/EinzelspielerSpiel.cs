@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Media;
+using SchiffeVersenken2._0;
 
 namespace SchiffeVersenken {
     internal class EinzelspielerSpiel : Spiel {
@@ -22,6 +24,7 @@ namespace SchiffeVersenken {
             bool spieler1AmZug = true;
             int letzterTrefferX = -1;
             int letzterTrefferY = -1;
+            Sounds sounds = new Sounds ();
 
             List<(int, int)> getroffeneSchuesse  = new List<(int, int)>();
 
@@ -59,19 +62,24 @@ namespace SchiffeVersenken {
 
                     if (spielfeldGegner[x, y] == ZellenStatus.Schiff) {
                         Console.WriteLine ("Treffer!");
+                        sounds.PlayKaboom ();
                         spielfeldGegner[x, y] = ZellenStatus.Treffer;
                         Schiff getroffenesSchiff = FindeGetroffenesSchiff(x, y, schiffeGegner);
                         if (getroffenesSchiff.IstVersenkt (spielfeldGegner)) {
                             Console.WriteLine ("Schiff versenkt!");
                             MarkiereVersenkt (getroffenesSchiff, spielfeldGegner);
                         }
+                        ClearConsole ();
                         continue;
                     } else {
                         Console.WriteLine ("Kein Treffer.");
+                        sounds.PlaySploosh ();
                         spielfeldGegner[x, y] = ZellenStatus.Verfehlt;
                     }
+                    ClearConsole ();
                     spieler1AmZug = false;
                 } else if (!spieler1AmZug) {
+                    Console.ForegroundColor = ConsoleColor.Red;
                     // Überprüfen, ob alle Schiffe des Gegners versenkt wurden
                     if (schiffeGegner.TrueForAll (schiff => SchiffIstVersenkt (schiff, spielfeldGegner))) {
                         Console.WriteLine ("Herzlichen Glückwunsch! Du hast alle Schiffe des Gegners versenkt!");
@@ -105,6 +113,7 @@ namespace SchiffeVersenken {
                             letzterTrefferX = x;
                             letzterTrefferY = y;
                         }
+                        ClearConsole ();
                         continue;
                     } else {
                         Console.WriteLine ("Kein Treffer.");
@@ -121,7 +130,8 @@ namespace SchiffeVersenken {
                     }
                     Console.WriteLine ("Es wird auf eine Aktion gewartet.");
                     Console.ReadKey ();
-                    Console.Clear ();
+                    ClearConsole ();
+                    Console.ForegroundColor = ConsoleColor.White;
                 }
             }
         }

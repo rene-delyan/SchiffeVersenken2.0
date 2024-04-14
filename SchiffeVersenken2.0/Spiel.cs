@@ -109,9 +109,6 @@ namespace SchiffeVersenken {
                         case ZellenStatus.Leer:
                             Console.Write (".  ");
                             break;
-                        case ZellenStatus.Schiff:
-                            Console.Write ("O  ");
-                            break;
                         case ZellenStatus.Treffer:
                             Console.Write ("X  ");
                             break;
@@ -168,9 +165,6 @@ namespace SchiffeVersenken {
                         case ZellenStatus.Verfehlt:
                             Console.Write ("*  ");
                             break;
-                        case ZellenStatus.Schiff:
-                            Console.Write ("O  ");
-                            break;
                         default:
                             Console.Write (".  ");
                             break;
@@ -178,6 +172,12 @@ namespace SchiffeVersenken {
                 }
                 Console.WriteLine ();
             }
+        }
+
+        protected void ClearConsole ()
+        {
+            Console.Clear ();
+            Console.SetCursorPosition (0, 0);
         }
     }
 }
