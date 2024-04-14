@@ -70,8 +70,6 @@ namespace SchiffeVersenken {
                         Console.WriteLine ("Kein Treffer.");
                         spielfeldGegner[x, y] = ZellenStatus.Verfehlt;
                     }
-                    Console.WriteLine ("Es wird auf eine Aktion gewartet.");
-                    Console.ReadKey ();
                     spieler1AmZug = false;
                 } else if (!spieler1AmZug) {
                     // Überprüfen, ob alle Schiffe des Gegners versenkt wurden
@@ -123,6 +121,7 @@ namespace SchiffeVersenken {
                     }
                     Console.WriteLine ("Es wird auf eine Aktion gewartet.");
                     Console.ReadKey ();
+                    Console.Clear ();
                 }
             }
         }
